@@ -1,5 +1,5 @@
 from gigachat import GigaChatAsyncClient
-from gigachat.models import Chat, Messages, MessagesRole
+from gigachat.models import Chat
 
 from token_ai import GigaToken
 
@@ -11,6 +11,7 @@ prompt = "Ты клиент, тебе звонят с целью продажи,
 
 load_dotenv()
 giga_tk = GigaToken(os.environ.get("CLIENT_ID"), os.environ.get("CLIENT_SECRET"))
+history = [{"role": "system", "content": prompt}]
     
 
 async def get_otvet(text):
@@ -27,19 +28,12 @@ async def get_otvet(text):
         access_token=token,
         scope="GIGACHAT_API_PERS",
     ) as giga:
-
-        messages=Chat(
-            messages=[
-                Messages(
-                    role=MessagesRole.SYSTEM,
-                    content=prompt
-                ),
-                Messages(
-                    role=MessagesRole.USER,
-                    content=text
-                )
-                ]
-                )
+        
+        history.append({"role": "user", "content": text})
+        
+        messages = Chat(messages=history)
 
         response = await giga.achat(messages)
+        history.append({"role": "assistant", "content": response.choices[0].message.content})
+        
         return response.choices[0].message.content
