@@ -1,17 +1,15 @@
 from gigachat import GigaChatAsyncClient
 from gigachat.models import Chat
 
-from token_ai import GigaToken
+from classes_ai import GigaToken, DialogManager
 
 import os
 from dotenv import load_dotenv
 
-#этот промт как пример, надо подумать над ним
-prompt = "Ты клиент, тебе звонят с целью продажи, отвечай как хочешь, но не используя знаки препинания"
 
 load_dotenv()
 giga_tk = GigaToken(os.environ.get("CLIENT_ID"), os.environ.get("CLIENT_SECRET"))
-history = [{"role": "system", "content": prompt}]
+chat = DialogManager()
     
 
 async def get_otvet(text):
@@ -29,11 +27,12 @@ async def get_otvet(text):
         scope="GIGACHAT_API_PERS",
     ) as giga:
         
-        history.append({"role": "user", "content": text})
+        await chat.add_history("user", text)
         
-        messages = Chat(messages=history)
+        messages = Chat(messages=await chat.get_history())
 
         response = await giga.achat(messages)
-        history.append({"role": "assistant", "content": response.choices[0].message.content})
-        
+
+        await chat.add_history("assistant", response.choices[0].message.content)
+
         return response.choices[0].message.content
