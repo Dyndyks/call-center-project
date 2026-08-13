@@ -41,10 +41,10 @@ class GigaToken():
 
 
 class DialogManager():
-    PROMPT = "Ты клиент, тебе звонят с целью продажи, отвечай как хочешь, но не используя знаки препинания"
+    _PROMPT = "Ты клиент, тебе звонят с целью продажи, отвечай как хочешь, но не используя знаки препинания"#изменить
 
     def __init__(self):
-        self.history = [{"role": "system", "content": self.PROMPT}]
+        self.history = [{"role": "system", "content": self._PROMPT}]
 
 
     async def add_history(self, role, content):
@@ -52,7 +52,7 @@ class DialogManager():
 
 
     async def clear_history(self):
-        self.history = [{"role": "system", "content": self.PROMPT}]
+        self.history = [{"role": "system", "content": self._PROMPT}]
 
 
     async def get_history(self):
