@@ -3,12 +3,11 @@ from gigachat.models import Chat
 
 from classes_ai import GigaToken, DialogManager
 
-import os
-from dotenv import load_dotenv
+from config import CLIENT_ID, CLIENT_SECRET
 
 
-load_dotenv()
-giga_tk = GigaToken(os.environ.get("CLIENT_ID"), os.environ.get("CLIENT_SECRET"))
+
+giga_tk = GigaToken(CLIENT_ID, CLIENT_SECRET)
 chat = DialogManager()
     
 
