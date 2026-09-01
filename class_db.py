@@ -19,7 +19,7 @@ class DBMeneger():
 
         await self._init_table()
 
-    async def db_close(self):
+    async def close(self):
         if self.pool is not None:
             await self.pool.close()
 
@@ -29,7 +29,11 @@ class DBMeneger():
 
     async def fetchval(self, query, *args):
         async with self.pool.acquire() as conn:
-            await conn.fetchval(query, *args)
+            return await conn.fetchval(query, *args)
+
+    async def fetchrow(self, query, *args):
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow(query, *args)
 
     async def _init_table(self):
         async with self.pool.acquire() as conn:

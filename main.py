@@ -1,21 +1,56 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 
 from client_ai import get_otvet
+from class_db import db
+
+
+class UserName(BaseModel):
+    name: str
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await db.connect()
+        yield
+    except Exception as e:
+        print(e)
+    finally:
+        await db.close()
 
 
 
-class Dialog(BaseModel):
-    operator: str
-    client: str
+app = FastAPI(lifespan=lifespan)
 
 
-app = FastAPI()
+@app.post("/user")
+async def check_create_user(data: UserName):
+    username = data.name
+    user_id = await db.fetchval(
+        "SELECT id FROM players WHERE username = $1", username
+    )
+
+    if user_id is None:
+        user_id = await db.fetchval(
+            "INSERT INTO players (username) VALUES ($1) RETURNING id", username
+        )
+        await db.execute(
+            "INSERT INTO players_stats (user_id) VALUES ($1)", user_id
+        )
+    return {"user_id": user_id, "user_name": username}
 
 
-@app.get("/")
-async def root():
-    return "connect"
+@app.get("/stats")
+async def send_stats(user_id: int):
+    stats = await db.fetchrow(
+        "SELECT * FROM players_stats WHERE user_id = $1", user_id
+    )
+    result = dict(stats)
+    del result["id"]
+    del result["user_id"]
+    return result
 
 
 @app.websocket("/dialog")
