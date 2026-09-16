@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from client_ai import get_otvet
 from class_db import db
+from read_scripts import read_file
 
 
 class UserName(BaseModel):
@@ -51,6 +52,11 @@ async def send_stats(user_id: int):
     del result["id"]
     del result["user_id"]
     return result
+
+
+@app.get("/script")
+async def send_sript():
+    return await read_file()
 
 
 @app.websocket("/dialog")
