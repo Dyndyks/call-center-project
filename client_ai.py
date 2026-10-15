@@ -1,6 +1,8 @@
 from gigachat import GigaChatAsyncClient
 from gigachat.models import Chat
 
+import asyncio
+
 from classes_ai import GigaToken, DialogManager
 
 from config import CLIENT_ID, CLIENT_SECRET
@@ -9,6 +11,8 @@ from config import CLIENT_ID, CLIENT_SECRET
 
 giga_tk = GigaToken(CLIENT_ID, CLIENT_SECRET)
 chat = DialogManager()
+
+queue = asyncio.Queue()
     
 
 async def get_otvet(text):
@@ -30,5 +34,22 @@ async def get_otvet(text):
         response = await giga.achat(messages)
 
         await chat.add_history("assistant", response.choices[0].message.content)
-
         return response.choices[0].message.content
+
+
+async def worker():
+    while True:
+        text, future = await queue.get()
+        try:
+            response = await get_otvet(text)
+            future.set_result(response)
+        except Exception as e:
+            future.set_exception(e)
+        finally:
+            queue.task_done()
+
+
+async def ask_worker(text):
+    future = asyncio.Future()
+    await queue.put((text, future))
+    return await future

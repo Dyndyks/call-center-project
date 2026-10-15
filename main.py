@@ -1,10 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
+import asyncio
 
-from client_ai import get_otvet
+from client_ai import ask_worker
 from class_db import db
 from read_scripts import read_file
+from client_ai import worker
 
 
 class UserName(BaseModel):
@@ -15,10 +17,12 @@ class UserName(BaseModel):
 async def lifespan(app: FastAPI):
     try:
         await db.connect()
+        task = asyncio.create_task(worker())
         yield
     except Exception as e:
         print(e)
     finally:
+        task.cancel()
         await db.close()
 
 
@@ -66,7 +70,7 @@ async def dialog(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             
-            otvet = await get_otvet(data)
+            otvet = await ask_worker(data)
             await websocket.send_text(otvet)
     except WebSocketDisconnect:
         print("отсоединился")
