@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import asyncio
 
 from client_ai import ask_worker
+from classes_ai import chat
 from class_db import db
 from read_scripts import read_file
 from client_ai import worker
@@ -70,7 +71,9 @@ async def dialog(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             
-            otvet = await ask_worker(data)
+            otvet = await ask_worker(websocket, data)
             await websocket.send_text(otvet)
     except WebSocketDisconnect:
         print("отсоединился")
+    finally:
+        await chat.clear_history(websocket)

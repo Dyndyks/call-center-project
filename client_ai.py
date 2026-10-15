@@ -3,19 +3,18 @@ from gigachat.models import Chat
 
 import asyncio
 
-from classes_ai import GigaToken, DialogManager
+from classes_ai import GigaToken, chat
 
 from config import CLIENT_ID, CLIENT_SECRET
 
 
 
 giga_tk = GigaToken(CLIENT_ID, CLIENT_SECRET)
-chat = DialogManager()
 
 queue = asyncio.Queue()
     
 
-async def get_otvet(text):
+async def get_otvet(websocket, text):
     """
     из самого юнити клиента получать именно: что надо/процент и само сообщение
     """
@@ -27,21 +26,21 @@ async def get_otvet(text):
         scope="GIGACHAT_API_PERS",
     ) as giga:
         
-        await chat.add_history("user", text)
+        await chat.add_history(websocket, "user", text)
         
-        messages = Chat(messages=await chat.get_history())
+        messages = Chat(messages=await chat.get_history(websocket))
 
         response = await giga.achat(messages)
 
-        await chat.add_history("assistant", response.choices[0].message.content)
+        await chat.add_history(websocket, "assistant", response.choices[0].message.content)
         return response.choices[0].message.content
 
 
 async def worker():
     while True:
-        text, future = await queue.get()
+        websocket, text, future = await queue.get()
         try:
-            response = await get_otvet(text)
+            response = await get_otvet(websocket, text)
             future.set_result(response)
         except Exception as e:
             future.set_exception(e)
@@ -49,7 +48,7 @@ async def worker():
             queue.task_done()
 
 
-async def ask_worker(text):
+async def ask_worker(websocket, text):
     future = asyncio.Future()
-    await queue.put((text, future))
+    await queue.put((websocket, text, future))
     return await future

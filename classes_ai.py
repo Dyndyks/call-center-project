@@ -42,18 +42,27 @@ class GigaToken():
 
 class DialogManager():
     _PROMPT = "Ты клиент, тебе звонят с целью продажи, отвечай как хочешь, но не используя знаки препинания"#изменить
+    _system_prompt = {"role": "system", "content": _PROMPT}
 
     def __init__(self):
-        self.history = [{"role": "system", "content": self._PROMPT}]
+        self.history = {}
+
+    async def add_history(self, websocket, role, content):
+        await self._init_wb_history(websocket)
+        self.history[websocket].append({"role": role, "content": content})
 
 
-    async def add_history(self, role, content):
-        self.history.append({"role": role, "content": content})
+    async def clear_history(self, websocket):
+        if websocket in self.history:
+            del self.history[websocket]
 
 
-    async def clear_history(self):
-        self.history = [{"role": "system", "content": self._PROMPT}]
+    async def get_history(self, websocket):
+        return self.history[websocket]
 
 
-    async def get_history(self):
-        return self.history
+    async def _init_wb_history(self, websocket):
+        self.history.setdefault(websocket, [self._system_prompt])
+
+
+chat = DialogManager()
