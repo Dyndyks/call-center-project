@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 import asyncio
 
-from client_ai import ask_worker
+from childclass_queue import ask_worker_queue, worker_queue, send_text_queue
 from classes_ai import chat
 from class_db import db
 from read_scripts import read_file
-from client_ai import worker
+
 
 
 class UserName(BaseModel):
@@ -18,12 +18,14 @@ class UserName(BaseModel):
 async def lifespan(app: FastAPI):
     try:
         await db.connect()
-        task = asyncio.create_task(worker())
+        task_worker_queue = asyncio.create_task(worker_queue())
+        task_send_text_queue = asyncio.create_task(send_text_queue())
         yield
     except Exception as e:
         print(e)
     finally:
-        task.cancel()
+        task_send_text_queue.cancel()
+        task_worker_queue.cancel()
         await db.close()
 
 
@@ -70,8 +72,8 @@ async def dialog(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            
-            otvet = await ask_worker(websocket, data)
+            #инициализировать воск через асинк
+            otvet = await ask_worker_queue(websocket, data)
             await websocket.send_text(otvet)
     except WebSocketDisconnect:
         print("отсоединился")
