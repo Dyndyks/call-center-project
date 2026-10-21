@@ -7,6 +7,7 @@ from childclass_queue import ask_worker_queue, worker_queue, send_text_queue
 from classes_ai import chat
 from class_db import db
 from read_scripts import read_file
+from recog import vosk_recognize, active_sessions
 
 
 
@@ -71,11 +72,17 @@ async def dialog(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_text()
-            #инициализировать воск через асинк
-            otvet = await ask_worker_queue(websocket, data)
-            await websocket.send_text(otvet)
+            data = await websocket.receive_bytes()
+            text = await asyncio.to_thread(vosk_recognize, websocket, data)
+            if text["text"] != "":
+                if not text["final"]:
+                    await websocket.send_text(text["text"])
+                if text["final"]:
+                    await websocket.send_text(text["text"])
+                    otvet_ai = await ask_worker_queue(websocket, text["text"])
+                    await websocket.send_text(otvet_ai)
     except WebSocketDisconnect:
+        del active_sessions[websocket]
         print("отсоединился")
     finally:
         await chat.clear_history(websocket)

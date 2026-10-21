@@ -13,7 +13,6 @@ async def get_random_file():
 
 async def read_file():
     file = await get_random_file()
-
     async with aiofiles.open(f"SalesScripts/{file}", "r", encoding="utf-8") as f:
         meta = json.loads(await f.read())
 

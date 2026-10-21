@@ -12,7 +12,7 @@ def vosk_recognize(websocket, audio_bytes):
 
     if rec.AcceptWaveform(audio_bytes):
         result = json.loads(rec.Result())
-        return result["text"]
+        return {"text": result.get("text", ""), "final": True}
     else:
         partial = json.loads(rec.PartialResult())
-        return partial["partial"] 
+        return {"text": partial.get("partial", ""), "final": False}
