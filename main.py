@@ -9,6 +9,7 @@ from class_db import db
 from read_scripts import read_file
 from recog import vosk_recognize, active_sessions
 from logicweb import handle_text, handle_audio, difference_account, session_succes
+from logger_config import log
 
 
 
@@ -24,7 +25,7 @@ async def lifespan(app: FastAPI):
         task_send_text_queue = asyncio.create_task(send_text_queue())
         yield
     except Exception as e:
-        print(e)
+        log.error(e)
     finally:
         task_send_text_queue.cancel()
         task_worker_queue.cancel()
@@ -76,6 +77,7 @@ async def dialog(websocket: WebSocket):
             data = await websocket.receive()
             
             if data["type"] == "websocket.disconnect":
+                log.info("клиент отключился")
                 break
 
             if data.get("text"):
@@ -93,7 +95,7 @@ async def dialog(websocket: WebSocket):
             await difference_account(websocket)
 
     except WebSocketDisconnect:
-        print("отключился")
+        log.info("соединение разорвано")
     finally:
         if websocket in session_succes and session_succes[websocket].get("id"):
             if session_succes[websocket]["num"] >= session_succes[websocket]["num_succes"]:

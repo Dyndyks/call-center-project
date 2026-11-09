@@ -3,6 +3,8 @@ import uuid
 import base64
 import time
 
+from logger_config import log
+
 
 class GigaToken():
 
@@ -34,9 +36,9 @@ class GigaToken():
                         self.token = resp.json()["access_token"]
                         self.mono = time.monotonic()
                     except httpx.HTTPStatusError as e:
-                        print(f"статус: {e.response.status_code}\nтекст{e.response.text}")
+                        log.error("статус: %s\nтекст %s", e.response.status_code, e.response.text)
                     except httpx.ConnectError as e:
-                        print("проблема с подключением")
+                        log.error("проблема с подключением")
         return self.token
 
 

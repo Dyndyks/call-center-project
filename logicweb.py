@@ -24,9 +24,9 @@ async def handle_audio(websocket, vosk_text):
         result = vosk_text["text"]
         await websocket.send_json({"type": "я", "text": result})
         otvet_ai = await ask_worker_queue(websocket, vosk_text["text"])
-        if re.search(r"\bда\b", otvet_ai, re.IGNORECASE) is not None:
+        if re.search(r"\b(да|конечно|хорошо)\b", otvet_ai, re.IGNORECASE) is not None:
             session_succes[websocket]["num"] += 1
-        elif re.search(r"\bнет\b", otvet_ai, re.IGNORECASE) is not None:
+        elif re.search(r"\b(нет|отстаньте|не хочу|не буду)\b", otvet_ai, re.IGNORECASE) is not None:
             session_succes[websocket]["num"] -= 1
         elif re.search(r"\bсброс\b", otvet_ai, re.IGNORECASE):
             await websocket.send_json({"type": "сброс", "text": otvet_ai})
