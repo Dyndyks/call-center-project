@@ -16,6 +16,12 @@ async def read_file():
     async with aiofiles.open(f"SalesScripts/{file}", "r", encoding="utf-8") as f:
         meta = json.loads(await f.read())
 
-    name_txt = meta["file"]
-    async with aiofiles.open(f"SalesScripts/{name_txt}", "r", encoding="utf-8") as f:
-        return await f.read()
+    name_file = meta["file"]
+    async with aiofiles.open(f"SalesScripts/{name_file}", "r", encoding="utf-8") as f:
+        return {"script": await f.read(), "name_file": file}
+
+
+async def get_succes(file):
+    async with aiofiles.open(f"SalesScripts/{file}", "r", encoding="utf-8") as f:
+        meta = json.loads(await f.read())
+    return meta["succes"]

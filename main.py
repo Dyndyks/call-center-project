@@ -3,11 +3,12 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 import asyncio
 
-from childclass_queue import ask_worker_queue, worker_queue, send_text_queue
+from childclass_queue import worker_queue, send_text_queue
 from classes_ai import chat
 from class_db import db
 from read_scripts import read_file
 from recog import vosk_recognize, active_sessions
+from logicweb import handle_text, handle_audio, difference_account, session_succes
 
 
 
@@ -72,17 +73,40 @@ async def dialog(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_bytes()
-            text = await asyncio.to_thread(vosk_recognize, websocket, data)
-            if text["text"] != "":
-                if not text["final"]:
-                    await websocket.send_text(text["text"])
-                if text["final"]:
-                    await websocket.send_text(text["text"])
-                    otvet_ai = await ask_worker_queue(websocket, text["text"])
-                    await websocket.send_text(otvet_ai)
+            data = await websocket.receive()
+            
+            if data["type"] == "websocket.disconnect":
+                break
+
+            if data.get("text"):
+                await handle_text(websocket, data["text"])
+                    
+            elif data.get("bytes"):
+                if websocket not in session_succes:
+                    continue
+                text = await asyncio.to_thread(vosk_recognize, websocket, data["bytes"])
+                if text["text"] != "":
+                    bool_handle_audio = await handle_audio(websocket, text)
+                    if not bool_handle_audio:
+                        break
+
+            await difference_account(websocket)
+
     except WebSocketDisconnect:
-        del active_sessions[websocket]
-        print("отсоединился")
+        print("отключился")
     finally:
+        if websocket in session_succes and session_succes[websocket].get("id"):
+            if session_succes[websocket]["num"] >= session_succes[websocket]["num_succes"]:
+                await db.execute(
+                    "UPDATE players_stats SET calls = calls + 1, succ_calls = succ_calls + 1 WHERE user_id = $1",
+                    session_succes[websocket]["id"]
+                )
+            else:
+                await db.execute(
+                    "UPDATE players_stats SET calls = calls + 1 WHERE user_id = $1",
+                    session_succes[websocket]["id"]
+                )
+            del session_succes[websocket]
+        if websocket in active_sessions:
+            del active_sessions[websocket]
         await chat.clear_history(websocket)
