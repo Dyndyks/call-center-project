@@ -11,3 +11,7 @@
 2. Установите зависимости: `pip install -r requirements.txt`
 3. Создайте файл `.env`(по примеру `.env.example`) и вставьте свои ключи от GigaChat
 4. Запустите: `uvicorn main:app --host 0.0.0.0`
+
+## Как запустить игру
+1. Скачайте билд по ссылке [https://disk.yandex.ru/d/8t2p0Dm7imjoCw]
+2. Запустите `exe` (сервер должен быть запущен)
