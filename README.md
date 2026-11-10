@@ -17,5 +17,5 @@
 2. Запустите `exe` (сервер должен быть запущен)
 
 
-![Скриншот игры](https://github.com/Dyndyks/call-center-project/blob/main/call.png?raw=true)
+![Скриншот игры](https://github.com/Dyndyks/call-center-project/blob/main/menu.png?raw=true)
 ![Скриншот игры](https://github.com/Dyndyks/call-center-project/blob/main/call.png?raw=true)
