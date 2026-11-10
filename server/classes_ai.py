@@ -29,7 +29,7 @@ class GigaToken():
         data = "scope=GIGACHAT_API_PERS"
 
         if self.token is None or int(time.monotonic() - self.start_mono) // 60 >= 25:
-            async with httpx.AsyncClient(verify="certs/chain.pem") as client:
+            async with httpx.AsyncClient(verify="../certs/chain.pem") as client:
                     try:
                         resp = await client.post(url, headers=headers, data=data)
                         resp.raise_for_status()

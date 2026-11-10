@@ -1,7 +1,7 @@
 from vosk import Model, KaldiRecognizer
 import json
 
-model = Model("models/vosk-model-small-ru-0.22")
+model = Model("../models/vosk-model-small-ru-0.22")
 active_sessions = {}
 
 def vosk_recognize(websocket, audio_bytes):
